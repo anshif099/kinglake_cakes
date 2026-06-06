@@ -1,7 +1,7 @@
-.hero-image {
+.hero-canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
 }
 
 .hero-scrim {
@@ -165,10 +165,11 @@
   background: #040303;
 }
 
-.hero-image {
+.hero-canvas {
   position: absolute;
   inset: 0;
   transition: transform 180ms ease;
+  will-change: transform;
 }
 
 .hero-scrim {

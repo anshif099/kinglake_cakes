@@ -125,18 +125,147 @@ function Icon({ name }) {
 
 function App() {
   const heroRef = useRef(null)
+  const canvasRef = useRef(null)
+  const frameImagesRef = useRef([])
+  const loadedFramesRef = useRef(new Set())
+  const targetFrameRef = useRef(0)
+  const smoothedFrameRef = useRef(0)
+  const renderedFrameRef = useRef(-1)
+  const viewportRef = useRef({ width: 0, height: 0, dpr: 1 })
   const [sequence, setSequence] = useState({ index: 0, progress: 0 })
   const [activeImage, setActiveImage] = useState(null)
   const [enquirySent, setEnquirySent] = useState(false)
 
-  const currentFrame = scrollFrames[sequence.index] || scrollFrames[0]
   const isFinalFrame = sequence.index === scrollFrames.length - 1
 
   useEffect(() => {
-    scrollFrames.forEach((frame) => {
+    let isCancelled = false
+    const loadedFrames = loadedFramesRef.current
+
+    const getDrawableFrame = (index) => {
+      if (loadedFrames.has(index)) {
+        return index
+      }
+
+      for (let offset = 1; offset < scrollFrames.length; offset += 1) {
+        const lower = index - offset
+        const upper = index + offset
+
+        if (lower >= 0 && loadedFrames.has(lower)) {
+          return lower
+        }
+
+        if (upper < scrollFrames.length && loadedFrames.has(upper)) {
+          return upper
+        }
+      }
+
+      return -1
+    }
+
+    const drawFrame = (requestedIndex, force = false) => {
+      const canvas = canvasRef.current
+      const drawableIndex = getDrawableFrame(requestedIndex)
+
+      if (!canvas || drawableIndex < 0 || (!force && renderedFrameRef.current === drawableIndex)) {
+        return
+      }
+
+      const image = frameImagesRef.current[drawableIndex]
+      const { width, height, dpr } = viewportRef.current
+
+      if (!image || !width || !height || !image.naturalWidth || !image.naturalHeight) {
+        return
+      }
+
+      const context = canvas.getContext('2d')
+
+      if (!context) {
+        return
+      }
+
+      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight)
+      const drawWidth = image.naturalWidth * scale
+      const drawHeight = image.naturalHeight * scale
+      const x = (width - drawWidth) / 2
+      const y = (height - drawHeight) / 2
+
+      context.setTransform(dpr, 0, 0, dpr, 0, 0)
+      context.clearRect(0, 0, width, height)
+      context.drawImage(image, x, y, drawWidth, drawHeight)
+      renderedFrameRef.current = drawableIndex
+    }
+
+    const resizeCanvas = () => {
+      const canvas = canvasRef.current
+
+      if (!canvas) {
+        return
+      }
+
+      const bounds = canvas.getBoundingClientRect()
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      const width = Math.max(1, Math.round(bounds.width))
+      const height = Math.max(1, Math.round(bounds.height))
+
+      viewportRef.current = { width, height, dpr }
+      canvas.width = Math.round(width * dpr)
+      canvas.height = Math.round(height * dpr)
+      drawFrame(Math.round(smoothedFrameRef.current), true)
+    }
+
+    frameImagesRef.current = scrollFrames.map((frame, index) => {
       const image = new Image()
+      image.decoding = 'async'
+      image.loading = 'eager'
+
+      if (index === 0 || index === scrollFrames.length - 1) {
+        image.fetchPriority = 'high'
+      }
+
+      image.onload = () => {
+        if (isCancelled) {
+          return
+        }
+
+        loadedFrames.add(index)
+        drawFrame(Math.round(smoothedFrameRef.current), index === 0)
+      }
+
       image.src = frame
+
+      return image
     })
+
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+
+    let animationFrame = 0
+
+    const animateFrames = () => {
+      const targetFrame = targetFrameRef.current
+      const currentFrame = smoothedFrameRef.current
+      const distance = targetFrame - currentFrame
+
+      if (Math.abs(distance) < 0.04) {
+        smoothedFrameRef.current = targetFrame
+      } else {
+        smoothedFrameRef.current = currentFrame + distance * 0.18
+      }
+
+      drawFrame(Math.round(smoothedFrameRef.current))
+      animationFrame = requestAnimationFrame(animateFrames)
+    }
+
+    animationFrame = requestAnimationFrame(animateFrames)
+
+    return () => {
+      isCancelled = true
+      cancelAnimationFrame(animationFrame)
+      window.removeEventListener('resize', resizeCanvas)
+      frameImagesRef.current = []
+      loadedFrames.clear()
+    }
   }, [])
 
   useEffect(() => {
@@ -158,8 +287,10 @@ function App() {
         Math.round(frameProgress * (scrollFrames.length - 1)),
       )
 
+      targetFrameRef.current = index
+
       setSequence((previous) => {
-        if (previous.index === index && Math.abs(previous.progress - progress) < 0.004) {
+        if (previous.index === index && Math.abs(previous.progress - progress) < 0.008) {
           return previous
         }
 
@@ -263,10 +394,10 @@ function App() {
       <main>
         <section className="hero-section" ref={heroRef} aria-labelledby="hero-title">
           <div className="hero-pin">
-            <img
-              className="hero-image"
-              src={currentFrame}
-              alt=""
+            <canvas
+              className="hero-canvas"
+              ref={canvasRef}
+              aria-hidden="true"
               style={{ transform: `scale(${introState.scale})` }}
             />
             <div className="hero-scrim" />
@@ -335,7 +466,12 @@ function App() {
             <div className="cake-grid">
               {signatureCakes.map((cake) => (
                 <article className="cake-card" key={cake.title}>
-                  <img src={cake.image} alt={`${cake.title} by KingLakeCakes`} />
+                  <img
+                    src={cake.image}
+                    alt={`${cake.title} by KingLakeCakes`}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div>
                     <h3>{cake.title}</h3>
                     <p>{cake.text}</p>
@@ -377,7 +513,7 @@ function App() {
                   key={item.title}
                   onClick={() => setActiveImage(item)}
                 >
-                  <img src={item.image} alt={item.title} />
+                  <img src={item.image} alt={item.title} loading="lazy" decoding="async" />
                   <span>{item.title}</span>
                 </button>
               ))}
@@ -500,7 +636,7 @@ function App() {
             <button className="lightbox-close" type="button" onClick={() => setActiveImage(null)} aria-label="Close preview">
               x
             </button>
-            <img src={activeImage.image} alt={activeImage.title} />
+            <img src={activeImage.image} alt={activeImage.title} decoding="async" />
             <p>{activeImage.title}</p>
           </div>
         </div>
