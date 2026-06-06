@@ -43,14 +43,17 @@
   z-index: 30;
   display: grid;
   grid-template-columns: auto 1fr auto;
+  grid-template-rows: 76px;
   align-items: center;
   gap: 26px;
+  height: 76px;
   min-height: 76px;
   padding: 0 max(24px, calc((100% - var(--content-width)) / 2));
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(5, 4, 4, 0.46);
   color: var(--paper);
   backdrop-filter: blur(18px);
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-100%);
@@ -84,16 +87,25 @@
   letter-spacing: 0;
 }
 
+.site-header .brand,
+.site-footer .brand {
+  width: 230px;
+  min-width: 0;
+  height: 76px;
+  overflow: hidden;
+}
+
 .brand-logo {
-  width: 184px;
-  height: 54px;
+  flex: 0 0 auto;
+  width: 400px;
+  height: 200px;
   object-fit: contain;
   object-position: left center;
 }
 
 .footer-logo {
-  width: 196px;
-  height: 58px;
+  width: 400px;
+  height: 200px;
 }
 
 .primary-nav {
@@ -685,14 +697,14 @@
 }
 
 .site-footer {
-  padding: 38px 0;
+  padding: 14px 0;
   background: #050404;
   color: rgba(250, 247, 239, 0.76);
 }
 
 .footer-grid {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 230px minmax(0, 1fr);
   align-items: center;
   gap: 24px;
 }
@@ -703,9 +715,13 @@
 
 .footer-contact {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-start;
+  justify-self: start;
+  flex-wrap: nowrap;
+  gap: 18px;
+  white-space: nowrap;
 }
 
 .footer-contact a {
@@ -717,9 +733,13 @@
 }
 
 .site-footer p {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
   margin: 0;
   font-size: 14px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .lightbox {
@@ -785,8 +805,14 @@
 @media (max-width: 980px) {
   .site-header {
     grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
     gap: 14px;
+    height: auto;
     min-height: 68px;
+  }
+
+  .site-header .brand {
+    height: 68px;
   }
 
   .primary-nav {
@@ -849,11 +875,20 @@
   }
 
   .footer-contact {
+    grid-column: 1;
+    grid-row: auto;
     justify-content: flex-start;
+    justify-self: start;
+    flex-wrap: wrap;
+    white-space: normal;
   }
 
   .site-footer p {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
     text-align: left;
+    white-space: normal;
   }
 }
 
@@ -879,8 +914,8 @@
   }
 
   .brand-logo {
-    width: 154px;
-    height: 46px;
+    width: 231px;
+    height: 69px;
   }
 
   .header-action span {
