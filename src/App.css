@@ -456,8 +456,10 @@
 
 .cake-card img {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+  aspect-ratio: 4 / 5;
+  object-fit: contain;
+  object-position: center;
+  background: rgba(10, 9, 7, 0.72);
 }
 
 .cake-card div {

@@ -20,13 +20,28 @@ const scrollFrames = Object.entries(frameModules)
   .map(([, frame]) => frame)
 
 const titleMap = {
+  CrimsonNoirElegance: 'Crimson Noir Elegance',
   Finishedweddingcentrepiece: 'Finished wedding centrepiece',
   Foundationdetail: 'Foundation detail',
   Goldbotanicalfinish: 'Gold botanical finish',
   Grandroomreveal: 'Grand room reveal',
+  MidnightRoseRoyale: 'Midnight Rose Royale',
   Sculptedmovement: 'Sculpted movement',
   Tierconstruction: 'Tier construction',
+  VelvetEmberWeddingCake: 'Velvet Ember Wedding Cake',
 }
+
+const galleryOrder = [
+  'Finishedweddingcentrepiece',
+  'Foundationdetail',
+  'Goldbotanicalfinish',
+  'Grandroomreveal',
+  'Sculptedmovement',
+  'Tierconstruction',
+  'MidnightRoseRoyale',
+  'CrimsonNoirElegance',
+  'VelvetEmberWeddingCake',
+]
 
 const getGalleryTitle = (path) => {
   const fileName = path.split('/').pop().replace(/\.[^.]+$/, '')
@@ -35,7 +50,18 @@ const getGalleryTitle = (path) => {
 }
 
 const gallery = Object.entries(galleryModules)
-  .sort(([a], [b]) => a.localeCompare(b))
+  .sort(([a], [b]) => {
+    const fileA = a.split('/').pop().replace(/\.[^.]+$/, '')
+    const fileB = b.split('/').pop().replace(/\.[^.]+$/, '')
+    const indexA = galleryOrder.indexOf(fileA)
+    const indexB = galleryOrder.indexOf(fileB)
+
+    if (indexA !== -1 || indexB !== -1) {
+      return (indexA === -1 ? Number.MAX_SAFE_INTEGER : indexA) - (indexB === -1 ? Number.MAX_SAFE_INTEGER : indexB)
+    }
+
+    return a.localeCompare(b)
+  })
   .map(([path, image]) => ({
     image,
     title: getGalleryTitle(path),
