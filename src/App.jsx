@@ -644,7 +644,7 @@ function App() {
           <div className="footer-contact">
             <a href="mailto:hello@kinglakecakes.com">
               <Icon name="mail" />
-              <span>hello@kinglakecakes.com</span>
+              <span>kinglakecakes.com.au</span>
             </a>
             <a href="https://www.instagram.com/kinglakecakes" aria-label="KingLakeCakes Instagram">
               <Icon name="social" />
