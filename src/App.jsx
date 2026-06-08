@@ -642,7 +642,7 @@ function App() {
             <img className="brand-logo footer-logo" src={logo} alt="KingLakeCakes" />
           </a>
           <div className="footer-contact">
-            <a href="mailto:hello@kinglakecakes.com">
+            <a href="mailto:kinglakecakes.com.au">
               <Icon name="mail" />
               <span>kinglakecakes.com.au</span>
             </a>
